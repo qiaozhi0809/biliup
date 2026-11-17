@@ -158,6 +158,10 @@ pub enum Commands {
         /// 按照时间分割视频
         #[arg(long)]
         split_time: Option<humantime::Duration>,
+
+        /// 抖音清晰度: origin|uhd|hd|sd|ld
+        #[arg(long, default_value = "origin")]
+        quality: String,
     },
     /// 启动web服务，默认端口19159
     Server {

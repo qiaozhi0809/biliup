@@ -208,7 +208,8 @@ pub async fn dispatch(cli: Cli, log_handle: LogHandle) -> AppResult<()> {
             output,
             split_size,
             split_time,
-        } => download(&url, output, split_size, split_time).await?,
+            quality,
+        } => download(&url, output, split_size, split_time, &quality).await?,
         Commands::Server {
             bind,
             port,

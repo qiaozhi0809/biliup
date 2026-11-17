@@ -8,7 +8,8 @@ use biliup::downloader::flv_writer;
 use biliup::downloader::flv_writer::{FlvTag, TagDataHeader};
 use biliup::downloader::httpflv::{self, Connection, map_parse_err};
 use biliup::downloader::live::{
-    DownloaderHint, LiveCredentials, LiveOptions, LiveRequest, LiveStatus, builtin_plugins,
+    DouyinOptions, DownloaderHint, LiveCredentials, LiveOptions, LiveRequest, LiveStatus,
+    builtin_plugins,
 };
 use biliup::downloader::util::{LifecycleFile, Segmentable};
 use biliup::downloader::{hls, live};
@@ -24,6 +25,7 @@ pub async fn download(
     output: String,
     split_size: Option<u64>,
     split_time: Option<humantime::Duration>,
+    quality: &str,
 ) -> AppResult<()> {
     let segmentable = Segmentable::new(split_time.map(|t| t.into()), split_size);
     let client = reqwest::Client::new();
@@ -31,7 +33,7 @@ pub async fn download(
         client,
         url: url.to_string(),
         name: url.to_string(),
-        options: LiveOptions::default(),
+        options: live_options(quality),
         credentials: LiveCredentials::default(),
     };
 
@@ -69,6 +71,17 @@ pub async fn download(
                 stream.platform, stream.downloader_hint
             ))))
         }
+    }
+}
+
+/// download 子命令的平台选项：目前只有抖音清晰度可调，其余保持默认。
+fn live_options(quality: &str) -> LiveOptions {
+    LiveOptions {
+        douyin: DouyinOptions {
+            quality: quality.to_string(),
+            ..Default::default()
+        },
+        ..Default::default()
     }
 }
 
@@ -285,6 +298,12 @@ impl<T: Read> Reader<T> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn download_options_carry_quality() {
+        assert_eq!(super::live_options("sd").douyin.quality, "sd");
+        assert_eq!(super::live_options("origin").douyin.protocol, "flv");
+    }
+
     use super::*;
 
     fn flv_with_tag(tag_type: u8, payload: &[u8]) -> Vec<u8> {
